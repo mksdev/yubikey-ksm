@@ -63,10 +63,6 @@ install: $(MANS)
 	install -D ykksm-export $(DESTDIR)$(binprefix)/ykksm-export
 	install -D ykksm-checksum $(DESTDIR)$(binprefix)/ykksm-checksum
 	install -D --backup --mode 640 --group $(wwwgroup) ykksm-config.php $(DESTDIR)$(etcprefix)/ykksm-config.php
-	install -D ykksm-gen-keys.1 $(DESTDIR)$(manprefix)/ykksm-gen-keys.1
-	install -D ykksm-import.1 $(DESTDIR)$(manprefix)/ykksm-import.1
-	install -D ykksm-export.1 $(DESTDIR)$(manprefix)/ykksm-export.1
-	install -D ykksm-checksum.1 $(DESTDIR)$(manprefix)/ykksm-checksum.1
 	install -D ykksm-db.sql $(DESTDIR)$(docprefix)/ykksm-db.sql
 	install -D Makefile $(DESTDIR)$(docprefix)/ykksm.mk
 	install -D $(DOCS) $(DESTDIR)$(docprefix)/
@@ -106,7 +102,7 @@ NAME_ykksm-gen-keys = 'Tool to generate keys on the YKKSM-KEYPROV format.'
 NAME_ykksm-import = 'Tool to import key data on the YKKSM-KEYPROV format.'
 
 %.1: %
-	help2man -N --name=$(NAME_$*) --version-string=$(VERSION) ./$* > $@
+	# help2man -N --name=$(NAME_$*) --version-string=$(VERSION) ./$* > $@
 
 man: $(MANS)
 
