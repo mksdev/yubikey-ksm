@@ -68,7 +68,7 @@ if( -r '/etc/yubico/ksm/config-db.cfg' ) {
 
 my $verbose = 0;
 my $creator;
-my $db = "dbi:$dbtype:dbhost=$dbserver:dbname=$dbname";
+my $db = "dbi:$dbtype:host=$dbserver:dbname=$dbname";
 while ($ARGV[0] =~ m/^-(.*)/) {
     my $cmd = shift @ARGV;
     if (($cmd eq "-v") || ($cmd eq "--verbose")) {
