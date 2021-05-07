@@ -103,9 +103,10 @@ NAME_ykksm-import = 'Tool to import key data on the YKKSM-KEYPROV format.'
 
 %.1: %
 ifndef $(shell command -v help2man 2> /dev/null)
-    $(error "help2man is not available please install help2man")
-endif
+    $(echo "help2man is not available";)
+else
     help2man -N --name=$(NAME_$*) --version-string=$(VERSION) ./$* > $@
+endif
 
 man: $(MANS)
 
