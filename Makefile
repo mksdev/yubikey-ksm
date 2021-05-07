@@ -102,7 +102,10 @@ NAME_ykksm-gen-keys = 'Tool to generate keys on the YKKSM-KEYPROV format.'
 NAME_ykksm-import = 'Tool to import key data on the YKKSM-KEYPROV format.'
 
 %.1: %
-	# help2man -N --name=$(NAME_$*) --version-string=$(VERSION) ./$* > $@
+ifndef $(shell command -v help2man 2> /dev/null)
+    $(error "help2man is not available please install help2man")
+endif
+    help2man -N --name=$(NAME_$*) --version-string=$(VERSION) ./$* > $@
 
 man: $(MANS)
 
