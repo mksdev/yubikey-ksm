@@ -97,28 +97,30 @@ my $pskc = 0;
 my $progflags;
 my $start = "";
 my $end = "";
+
 while (defined($ARGV[0])) {
     my $cmd = shift @ARGV;
     if (($cmd eq "-v") || ($cmd eq "--verbose")) {
-	$verbose = 1;
+	    $verbose = 1;
     } elsif (($cmd eq "-h") || ($cmd eq "--help")) {
-	usage();
+	    usage();
     } elsif ($cmd eq "--urandom") {
-	$device = "/dev/urandom";
+	    $device = "/dev/urandom";
     } elsif ($cmd eq "--progflags") {
-	$progflags = "," . shift;
+	    $progflags = "," . shift;
     } elsif ($cmd eq "--pskc") {
-	$pskc = 1;
+	    $pskc = 1;
     } elsif ($cmd =~ m/^[0-9]+/) {
-	if ($start eq "") {
-	    $start = $cmd;
-	} elsif ($end eq "") {
-	    $end = $cmd;
-	} else {
-	    die "Invalid extra argument: $cmd";
-	}
+        if ($start eq "") {
+            $start = $cmd;
+        } elsif ($end eq "") {
+            $end = $cmd;
+        } else {
+            die "Invalid extra argument: $cmd";
+        }
     }
 }
+
 die "Missing START parameter, try --help" if ($start eq "");
 $end = $start if (!$end);
 
@@ -132,9 +134,9 @@ if ($pskc) {
     print "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
     print "<KeyContainer Version=\"1.0\"\n";
     if ($start == $end) {
-	print "              Id=\"yk-$start-pskc\"\n";
+	    print "              Id=\"yk-$start-pskc\"\n";
     } else {
-	print "              Id=\"yk-$start-to-$end-pskc\"\n";
+	    print "              Id=\"yk-$start-to-$end-pskc\"\n";
     }
     print "              xmlns=\"urn:ietf:params:xml:ns:keyprov:pskc\">\n";
 } else {
@@ -152,34 +154,34 @@ while ($ctr <= $end) {
     my $lockpw = gethexrand(6);
 
     if ($pskc) {
-	print "     <KeyPackage>\n";
-	print "       <DeviceInfo>\n";
-	print "         <Manufacturer>oath.UB</Manufacturer>\n";
-	print "         <SerialNo>$ctr</SerialNo>\n";
-	print "         <StartDate>$now</StartDate>\n";
-	print "       </DeviceInfo>\n";
-	print "       <CryptoModuleInfo>\n";
-	print "         <Id>1</Id>\n";
-	print "       </CryptoModuleInfo>\n";
-	print "       <Key Id=\"yk-key-$ctr-slot-1\"\n";
-	print "            Algorithm=\"http://www.yubico.com/#yubikey-aes\">\n";
-	print "         <Issuer>Yubico</Issuer>\n";
-	print "         <AlgorithmParameters>\n";
-	print "           <ResponseFormat Encoding=\"ALPHANUMERIC\" Length=\"44\"/>\n";
-	print "         </AlgorithmParameters>\n";
-	print "         <Data>\n";
-	print "           <Secret>\n";
-	print "             <PlainValue>\n";
-	print "               $aeskey\n";
-	print "             </PlainValue>\n";
-	print "           </Secret>\n";
-	print "         </Data>\n";
-	print "         <UserId>CN=$modhexctr, UID=$internaluid</UserId>\n";
-	print "       </Key>\n";
-	print "     </KeyPackage>\n";
+        print "     <KeyPackage>\n";
+        print "       <DeviceInfo>\n";
+        print "         <Manufacturer>oath.UB</Manufacturer>\n";
+        print "         <SerialNo>$ctr</SerialNo>\n";
+        print "         <StartDate>$now</StartDate>\n";
+        print "       </DeviceInfo>\n";
+        print "       <CryptoModuleInfo>\n";
+        print "         <Id>1</Id>\n";
+        print "       </CryptoModuleInfo>\n";
+        print "       <Key Id=\"yk-key-$ctr-slot-1\"\n";
+        print "            Algorithm=\"http://www.yubico.com/#yubikey-aes\">\n";
+        print "         <Issuer>Yubico</Issuer>\n";
+        print "         <AlgorithmParameters>\n";
+        print "           <ResponseFormat Encoding=\"ALPHANUMERIC\" Length=\"44\"/>\n";
+        print "         </AlgorithmParameters>\n";
+        print "         <Data>\n";
+        print "           <Secret>\n";
+        print "             <PlainValue>\n";
+        print "               $aeskey\n";
+        print "             </PlainValue>\n";
+        print "           </Secret>\n";
+        print "         </Data>\n";
+        print "         <UserId>CN=$modhexctr, UID=$internaluid</UserId>\n";
+        print "       </Key>\n";
+        print "     </KeyPackage>\n";
     } else {
-	print "# hexctr $hexctr modhexctr $modhexctr\n" if ($verbose);
-	printf "$ctr,$modhexctr,$internaluid,$aeskey,$lockpw,$now,$progflags\n";
+	    print "# hexctr $hexctr modhexctr $modhexctr\n" if ($verbose);
+	    printf "$ctr,$modhexctr,$internaluid,$aeskey,$lockpw,$now,$progflags\n";
     }
 
     $ctr++;

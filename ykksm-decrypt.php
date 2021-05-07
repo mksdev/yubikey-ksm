@@ -34,96 +34,93 @@ require_once 'ykksm-utils.php';
 ob_end_clean();
 
 openlog("ykksm", LOG_PID, $logfacility)
-  or die("ERR Syslog open error\n");
+or die("ERR Syslog open error\n");
 
 $otp = $_REQUEST["otp"];
 if (!$otp) {
-  syslog(LOG_INFO, "No OTP provided");
-  die("ERR No OTP provided\n");
- }
+    syslog(LOG_INFO, "No OTP provided");
+    die("ERR No OTP provided\n");
+}
 
-if (!preg_match("/^([cbdefghijklnrtuv]{0,16})([cbdefghijklnrtuv]{32})$/",
-		$otp, $matches)) {
-  syslog(LOG_INFO, "Invalid OTP format: $otp");
-  die("ERR Invalid OTP format\n");
- }
+if (!preg_match("/^([cbdefghijklnrtuv]{0,16})([cbdefghijklnrtuv]{32})$/", $otp, $matches)) {
+    syslog(LOG_INFO, "Invalid OTP format: $otp");
+    die("ERR Invalid OTP format\n");
+}
 $id = $matches[1];
 $modhex_ciphertext = $matches[2];
 
 # Oracle support in PDO is highly experimental, OCI is used instead
 # Unfortunately PDO and OCI APIs are different...
-$use_oci = substr($db_dsn,0,3) === 'oci';
+$use_oci = substr($db_dsn, 0, 3) === 'oci';
 
 if (!$use_oci) {
-  try {
-    $dbh = new PDO($db_dsn, $db_username, $db_password, $db_options);
-   } catch (PDOException $e) {
-    syslog(LOG_ERR, "Database error: " . $e->getMessage());
-    die("ERR Database error\n");
-   }
- }
-else {
-  # "oci:" prefix needs to be removed before passing db_dsn to OCI
-  $db_dsn = substr($db_dsn, 4);
-  $dbh = oci_connect($db_username, $db_password, $db_dsn);
-  if (!$dbh) {
-    $error = oci_error();
-    syslog(LOG_err, "Database error: " . $error["message"]);
-    die("ERR Database error\n");
-   }
- }
+    try {
+        $dbh = new PDO($db_dsn, $db_username, $db_password, $db_options);
+    } catch (PDOException $e) {
+        syslog(LOG_ERR, "Database error: " . $e->getMessage());
+        die("ERR Database error\n");
+    }
+} else {
+    # "oci:" prefix needs to be removed before passing db_dsn to OCI
+    $db_dsn = substr($db_dsn, 4);
+    $dbh = oci_connect($db_username, $db_password, $db_dsn);
+    if (!$dbh) {
+        $error = oci_error();
+        syslog(LOG_err, "Database error: " . $error["message"]);
+        die("ERR Database error\n");
+    }
+}
 
 $sql = "SELECT aeskey, internalname FROM yubikeys " .
-       "WHERE publicname = '$id' AND ";
+    "WHERE publicname = '$id' AND ";
 
 if (!$use_oci) {
-  $sql .= "(active OR active = 'true')";
-  $result = $dbh->query($sql);
-  if (!$result) {
-    syslog(LOG_ERR, "Database query error.  Query: " . $sql . " Error: " .
-           print_r ($dbh->errorInfo (), true));
-    die("ERR Database error\n");
-   }
+    $sql .= "(active OR active = 'true')";
+    $result = $dbh->query($sql);
+    if (!$result) {
+        syslog(LOG_ERR, "Database query error.  Query: " . $sql . " Error: " .
+            print_r($dbh->errorInfo(), true));
+        die("ERR Database error\n");
+    }
 
-  $row = $result->fetch(PDO::FETCH_ASSOC);
-  $aeskey = $row['aeskey'];
-  $internalname = $row['internalname'];
- }
-else {
-  $sql .= "active = 1";
-  $result = oci_parse($dbh, $sql);
-  $execute = oci_execute($result);
-  if (!$execute) {
-    $error = oci_error($result);
-    syslog(LOG_ERR, 'Database query error.   Query:  ' . $sql . 'Error: CODE : ' . $error["code"] .
-           ' MESSAGE : ' . $error["message"] . ' POSITION : ' . $error["offset"] .
-           ' STATEMENT : ' . $error["sqltext"]);
-    die("ERR Database error\n");
-   }
+    $row = $result->fetch(PDO::FETCH_ASSOC);
+    $aeskey = $row['aeskey'];
+    $internalname = $row['internalname'];
+} else {
+    $sql .= "active = 1";
+    $result = oci_parse($dbh, $sql);
+    $execute = oci_execute($result);
+    if (!$execute) {
+        $error = oci_error($result);
+        syslog(LOG_ERR, 'Database query error.   Query:  ' . $sql . 'Error: CODE : ' . $error["code"] .
+            ' MESSAGE : ' . $error["message"] . ' POSITION : ' . $error["offset"] .
+            ' STATEMENT : ' . $error["sqltext"]);
+        die("ERR Database error\n");
+    }
 
-  $row = oci_fetch_array($result, OCI_ASSOC);
-  $aeskey = $row['AESKEY'];
-  $internalname = $row['INTERNALNAME'];
- }
+    $row = oci_fetch_array($result, OCI_ASSOC);
+    $aeskey = $row['AESKEY'];
+    $internalname = $row['INTERNALNAME'];
+}
 
 if (!$aeskey) {
-  syslog(LOG_INFO, "Unknown yubikey: " . $otp);
-  die("ERR Unknown yubikey\n");
- }
+    syslog(LOG_INFO, "Unknown yubikey: " . $otp);
+    die("ERR Unknown yubikey\n");
+}
 
 $ciphertext = modhex2hex($modhex_ciphertext);
 $plaintext = aes128ecb_decrypt($aeskey, $ciphertext);
 
 $uid = substr($plaintext, 0, 12);
 if (strcmp($uid, $internalname) != 0) {
-  syslog(LOG_ERR, "UID error: $otp $plaintext: $uid vs $internalname");
-  die("ERR Corrupt OTP\n");;
- }
+    syslog(LOG_ERR, "UID error: $otp $plaintext: $uid vs $internalname");
+    die("ERR Corrupt OTP\n");;
+}
 
 if (!crc_is_good($plaintext)) {
-  syslog(LOG_ERR, "CRC error: $otp: $plaintext");
-  die("ERR Corrupt OTP\n");
- }
+    syslog(LOG_ERR, "CRC error: $otp: $plaintext");
+    die("ERR Corrupt OTP\n");
+}
 
 # Mask out interesting fields
 $counter = substr($plaintext, 14, 2) . substr($plaintext, 12, 2);
@@ -134,7 +131,7 @@ $use = substr($plaintext, 22, 2);
 $out = "OK counter=$counter low=$low high=$high use=$use";
 
 syslog(LOG_INFO, "SUCCESS OTP $otp PT $plaintext $out")
-  or die("ERR Log error\n");
+or die("ERR Log error\n");
 
 print "$out\n";
 

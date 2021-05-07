@@ -67,15 +67,15 @@ my $db = "dbi:$dbtype:$dbname";
 while ($ARGV[0] =~ m/^-(.*)/) {
     my $cmd = shift @ARGV;
     if (($cmd eq "-v") || ($cmd eq "--verbose")) {
-	$verbose = 1;
+	    $verbose = 1;
     } elsif (($cmd eq "-h") || ($cmd eq "--help")) {
-	usage();
+	    usage();
     } elsif ($cmd eq "--database") {
-	$db = shift;
+	    $db = shift;
     } elsif ($cmd eq "--db-user") {
-	$dbuser = shift;
+	    $dbuser = shift;
     } elsif ($cmd eq "--db-passwd") {
-	$dbpass = shift;
+	    $dbpass = shift;
     }
 }
 
@@ -93,11 +93,11 @@ $sth->execute()
 my $row;
 while ($row = $sth->fetchrow_hashref()) {
     if ($verbose) {
-	print "# ";
-	foreach my $key (keys %$row) {
-	    print $key . "=" . $row->{$key} . " ";
-	}
-	print "\n";
+        print "# ";
+        foreach my $key (keys %$row) {
+            print $key . "=" . $row->{$key} . " ";
+        }
+        print "\n";
     }
     print $row->{'serialnr'} . ",";
     print $row->{'publicname'} . ",";
